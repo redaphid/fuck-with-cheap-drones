@@ -6,29 +6,41 @@
  */
 int count = 0;
 int oldValue = -1;
+#define LED D7
+#define PROBE A0
+#define BUTTON D6
 // setup() runs once, when the device is first turned on.
 void setup() {
-  pinMode(D0, INPUT);
+  pinMode(PROBE, INPUT_PULLDOWN);
+  pinMode(LED, OUTPUT);
+  pinMode(BUTTON, INPUT_PULLDOWN);
   Serial.begin(9600);
-  Serial.println("starting up");
+  Serial.println("starting up v10");
   Serial.flush();
+  digitalWrite(LED, HIGH);
   delay(1000);
 }
 
 // loop() runs over and over again, as quickly as it can execute.
 void loop() {
-  int newValue = digitalRead(D0);
-  count++;
-  if (newValue != oldValue) {
-    Serial.println();
-    Serial.println();
-    if(count > 5) {
-      Serial.println(count);
-      Serial.println(newValue);
-      oldValue = newValue;
-    }
-
-    count = 0;
+  if(digitalRead(BUTTON)) {
+    delay(500);
+    Serial.println("waiting.");
+    return;
   }
-  delayMicroseconds(1);
+  int newValue = analogRead(PROBE);
+  count++;
+  if (abs(newValue - oldValue) > 700) {
+    Serial.println();
+    int bit = 0;
+    if (newValue > oldValue) bit = 1;
+    int times = (micros() - count) / 5000; 
+    Serial.print(bit);
+    Serial.print("x");
+    Serial.println(times);
+
+    oldValue = newValue;
+    digitalWrite(LED, newValue);
+    count = micros();
+  }
 }
